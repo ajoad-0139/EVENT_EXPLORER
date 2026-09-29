@@ -6,5 +6,13 @@ import (
 )
 
 func init() {
-    beego.Router("/", &controllers.MainController{})
+	beego.Router("/", &controllers.MainController{})
+
+	api := beego.NewNamespace("/api",
+		beego.NSNamespace("/locations",
+			beego.NSRouter("/autocomplete", &controllers.PlacesController{}, "get:AutoCompletedPlaces"),
+			beego.NSRouter("/:placeId", &controllers.PlacesController{}, "get:GetAPlaceById"),
+		),
+	)
+	beego.AddNamespace(api)
 }

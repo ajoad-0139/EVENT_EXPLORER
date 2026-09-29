@@ -4,6 +4,7 @@ import (
 	"errors"
 	"strings"
 
+	beego "github.com/beego/beego/v2/server/web"
 	"github.com/spf13/viper"
 )
 
@@ -13,8 +14,15 @@ type Secrets struct {
 	TicketmasterKey string `mapstructure:"TICKETMASTER_API_KEY"`
 }
 
-// defining secrets variable
+// base urls
+type BaseUrls struct {
+	GoogleBaseURL       string
+	TicketmasterBaseURL string
+}
+
+// defining secrets and baseUrl variables
 var secrets Secrets
+var baseUrl BaseUrls
 
 func MustLoad() error {
 	// creating new viper instance
@@ -43,13 +51,32 @@ func MustLoad() error {
 	secrets.GoogleKey = strings.TrimSpace(secrets.GoogleKey)
 	secrets.TicketmasterKey = strings.TrimSpace(secrets.TicketmasterKey)
 
-	//check if any secrets is missing
+	//loading base urls to memory
+	googleUrl, err := beego.AppConfig.String("googlebaseurl")
+	if err != nil {
+		return err
+	}
+	baseUrl.GoogleBaseURL = googleUrl
+
+	ticketMasterUrl, err := beego.AppConfig.String("ticketmasterbaseurl")
+	if err != nil {
+		return err
+	}
+	baseUrl.TicketmasterBaseURL = ticketMasterUrl
+
+	//check if any secrets and urls are missing
 	var missing []string
 	if secrets.GoogleKey == "" {
 		missing = append(missing, "GOOGLE_API_KEY")
 	}
 	if secrets.TicketmasterKey == "" {
 		missing = append(missing, "TICKETMASTER_API_KEY")
+	}
+	if baseUrl.GoogleBaseURL == "" {
+		missing = append(missing, "GOOGLE_BASE_URL (app.conf)")
+	}
+	if baseUrl.TicketmasterBaseURL == "" {
+		missing = append(missing, "TICKET_MASTER_BASE_URL (app.conf)")
 	}
 	if len(missing) > 0 {
 		return errors.New("missing env vars: " + strings.Join(missing, ", "))
@@ -60,4 +87,8 @@ func MustLoad() error {
 // access secrets through methods only
 func GetSecrets() Secrets {
 	return secrets
+}
+
+func GetBaseUrls() BaseUrls {
+	return baseUrl
 }
