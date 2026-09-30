@@ -36,6 +36,22 @@ func (e *EventsController) ListEvents() {
 
 }
 
-func (e*EventsController) SingleEvent() {
-	
+func (e *EventsController) SingleEvent() {
+	eventId := e.Ctx.Input.Param(":eventId")
+
+	if eventId == "" {
+		utils.JsonError(&e.Controller, 400, "must provide eventId as a path parameter")
+		return
+	}
+
+	res, statusCode, errMsg := requests.GetSingleEvent(e.Ctx.Request.Context(), eventId)
+	if errMsg != "" {
+		utils.JsonError(&e.Controller, statusCode, errMsg)
+		return
+	}
+
+	e.Data["single-event"] = res
+	e.TplName = "single-event.tpl"
+	// utils.JsonSuccess(&e.Controller, statusCode, res)
+
 }

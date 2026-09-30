@@ -1,6 +1,7 @@
 package models
 
 type EventResponse struct {
+	ID         string `json:"id"`
 	Name       string `json:"name"`
 	URL        string `json:"url"`
 	Info       string `json:"info"`

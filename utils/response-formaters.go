@@ -9,6 +9,7 @@ import (
 
 func init() {
 	beego.AddFuncMap("formatEventDate", FormatEventDate)
+	beego.AddFuncMap("formatEventTime", FormatEventTime)
 }
 
 // reusable response formaters
@@ -35,4 +36,12 @@ func FormatEventDate(date string) string {
 		return date
 	}
 	return t.Format("Mon, 02 Jan 2006")
+}
+
+func FormatEventTime(localTime string) string {
+	t, err := time.Parse("15:04:05", localTime)
+	if err != nil {
+		return "Time to be announced"
+	}
+	return t.Format("3:04 PM")
 }

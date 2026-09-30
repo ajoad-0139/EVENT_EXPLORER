@@ -24,7 +24,7 @@
         <p class="event-card-venue">{{with .Embedded.Venues}}{{(index . 0).Name}}{{end}}</p>
         <div class="event-card-footer">
             <p>{{with .Embedded.Venues}}{{(index . 0).City.Name}}{{end}}</p>
-            <a class="event-card-link" href="" target="_blank" rel="noopener noreferrer">
+            <a class="event-card-link" href="/events/{{.ID}}">
                 <span>View details</span>
                 <span>&nearr;</span>
             </a>
