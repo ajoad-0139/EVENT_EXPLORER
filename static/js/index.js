@@ -7,6 +7,8 @@ let sessionToken = crypto.randomUUID();
 
 let suggestions = [];
 
+let selectedPlace = null;
+
 searchInput.addEventListener("input", (event) => {
     const query = event.target.value.trim();
 
@@ -35,7 +37,7 @@ searchInput.addEventListener("input", (event) => {
         } catch (error) {
             console.error(error);
         }
-    }, 500);
+    }, 300);
 });
 
 
@@ -74,13 +76,12 @@ function renderSuggestions() {
 
 
 searchButton.addEventListener("click", async () => {
-    if (!suggestions.length) {
+    if (!selectedPlace) {
         return;
     }
 
-    const selectedPlace = suggestions[0];
-
     try {
+        // Get city + countryCode from the selected place
         const response = await fetch(
             `/api/locations/${selectedPlace.placeId}?sessionToken=${sessionToken}`
         );
@@ -93,11 +94,16 @@ searchButton.addEventListener("click", async () => {
 
         console.log("Location:", location);
 
-        // The autocomplete → details session is finished.
+        
+        const params = new URLSearchParams({
+            city: location.city,
+            countryCode: location.countryCode
+        });
         sessionToken = crypto.randomUUID();
+        // Redirect
+        window.location.href = `/events?${params.toString()}`;
 
-        console.log("New session:", sessionToken);
     } catch (error) {
-        console.error(error);
+        console.error("Failed to get location details:", error);
     }
 });

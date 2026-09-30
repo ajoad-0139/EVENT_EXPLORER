@@ -6,8 +6,12 @@ import (
 )
 
 func init() {
-	beego.Router("/", &controllers.MainController{})
 
+	//frontend routes
+	beego.Router("/", &controllers.MainController{})
+	beego.Router("/events", &controllers.EventsController{}, "get:List")
+
+	//api proxies for serving data to browser
 	api := beego.NewNamespace("/api",
 		beego.NSNamespace("/locations",
 			beego.NSRouter("/autocomplete", &controllers.PlacesController{}, "get:AutoCompletedPlaces"),
