@@ -44,3 +44,8 @@ type FetchedResult struct {
 	Status int
 	ErrMsg string
 }
+
+type EventCategory struct {
+	Name   string
+	Events []EventResponse
+}

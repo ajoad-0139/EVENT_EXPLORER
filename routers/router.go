@@ -2,6 +2,7 @@ package routers
 
 import (
 	"event-explorer/controllers"
+
 	beego "github.com/beego/beego/v2/server/web"
 )
 
@@ -9,7 +10,8 @@ func init() {
 
 	//frontend routes
 	beego.Router("/", &controllers.MainController{})
-	beego.Router("/events", &controllers.EventsController{}, "get:List")
+	beego.Router("/events", &controllers.EventsController{}, "get:ListEvents")
+	beego.Router("/events/:eventId", &controllers.EventsController{}, "get:SingleEvent")
 
 	//api proxies for serving data to browser
 	api := beego.NewNamespace("/api",

@@ -59,9 +59,9 @@ func GetConcurrentEvents(ctx context.Context, city string, countryCode string, c
 	return events, http.StatusOK, ""
 }
 
-func GetEvents(ctx context.Context, city string, countryCode string, limit string) ([]models.EventResponse, int, string) {
+func GetEvents(ctx context.Context, city string, countryCode string, limit string) ([]models.EventCategory, int, string) {
 
-	categories := []string{"Sports", "Music"}
+	categories := []string{"Music", "Sports"}
 	results := make([]models.FetchedResult, len(categories))
 
 	var wg sync.WaitGroup
@@ -75,14 +75,19 @@ func GetEvents(ctx context.Context, city string, countryCode string, limit strin
 	}
 	wg.Wait()
 
-	// combine
-	combined := []models.EventResponse{}
-	for _, r := range results {
+	// group by category, keeping the order of `categories`
+	sections := make([]models.EventCategory, 0, len(categories))
+	for i, r := range results {
 		if r.Status != http.StatusOK {
 			return nil, r.Status, r.ErrMsg
 		}
-		combined = append(combined, r.Events...)
+		sections = append(sections, models.EventCategory{
+			Name:   categories[i],
+			Events: r.Events,
+		})
 	}
 
-	return combined, http.StatusOK, ""
+	return sections, http.StatusOK, ""
 }
+
+//get single event

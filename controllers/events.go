@@ -11,7 +11,7 @@ type EventsController struct {
 	beego.Controller
 }
 
-func (e *EventsController) List() {
+func (e *EventsController) ListEvents() {
 	city := e.GetString("city")
 	countryCode := e.GetString("countryCode")
 
@@ -30,5 +30,12 @@ func (e *EventsController) List() {
 		return
 	}
 
-	utils.JsonSuccess(&e.Controller, statusCode, res)
+	e.Data["events"] = res
+	e.TplName = "lists.tpl"
+	// utils.JsonSuccess(&e.Controller, statusCode, res)
+
+}
+
+func (e*EventsController) SingleEvent() {
+	
 }
