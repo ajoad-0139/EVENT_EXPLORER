@@ -22,7 +22,7 @@ func (e *EventsController) ListEvents() {
 		return
 	}
 	if countryCode == "" {
-		utils.RenderErrorMsg(&e.Controller, 400, "City is missing", "Please select a city from the suggestions to see its events.")
+		utils.RenderErrorMsg(&e.Controller, 400, "country is missing", "Please select a country code from the suggestions to see its events.")
 		return
 	}
 	limit := "6"

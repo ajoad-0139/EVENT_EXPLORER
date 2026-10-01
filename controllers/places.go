@@ -25,6 +25,7 @@ func (p *PlacesController) AutoCompletedPlaces() {
 	}
 	if token == "" {
 		utils.JsonError(&p.Controller, 400, "session token is not present")
+		return
 	}
 	suggestions, statusCode, err := requests.GetAutoCompletePlaces(p.Ctx.Request.Context(), input, token)
 	if err != nil {
