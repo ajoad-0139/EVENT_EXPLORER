@@ -20,6 +20,11 @@ func init() {
 			beego.NSRouter("/autocomplete", &controllers.PlacesController{}, "get:AutoCompletedPlaces"),
 			beego.NSRouter("/:placeId", &controllers.PlacesController{}, "get:GetAPlaceById"),
 		),
+		beego.NSNamespace("/cache",
+			beego.NSRouter("/events", &controllers.CacheController{}, "delete:InvalidateEventList"),
+			beego.NSRouter("/events/:eventId", &controllers.CacheController{}, "delete:InvalidateSingleEvent"),
+			beego.NSRouter("/all", &controllers.CacheController{}, "delete:InvalidateAll"),
+		),
 	)
 	beego.AddNamespace(api)
 }
