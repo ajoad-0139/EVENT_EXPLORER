@@ -17,6 +17,10 @@ func main() {
 		os.Exit(1)
 	}
 
+	if beego.BConfig.RunMode == "dev" {
+		beego.SetStaticPath("/swagger", "swagger")
+	}
+
 	//start the server
 	beego.Run()
 }

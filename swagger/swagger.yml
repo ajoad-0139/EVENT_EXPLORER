@@ -1,0 +1,321 @@
+openapi: 3.0.3
+info:
+  title: Event Explorer API
+  version: 1.0.0
+  description: |
+    Event Explorer is a Beego web app that lets visitors search a city and browse
+    upcoming **Music** and **Sports** events from Ticketmaster.
+
+    The service exposes three groups of endpoints:
+
+    * **Pages** - server-rendered HTML (`text/html`).
+    * **Locations** - JSON proxy over the Google Places API (New), so the Google key never reaches the browser.
+    * **Cache** - JSON endpoints to invalidate the in-memory caches.
+
+    Event lists are cached for 5 minutes and single events for 10 minutes.
+    Page responses carry an `X-Cache: HIT | MISS` header.
+servers:
+  - url: http://localhost:8080
+    description: Local development
+tags:
+  - name: Pages
+    description: Server-rendered HTML pages
+  - name: Locations
+    description: Google Places proxy (JSON)
+  - name: Cache
+    description: In-memory cache invalidation (JSON)
+
+paths:
+  /:
+    get:
+      tags: [Pages]
+      summary: Home page with the city search box
+      responses:
+        "200":
+          description: Rendered `index.tpl`
+          content:
+            text/html:
+              schema:
+                type: string
+
+  /events:
+    get:
+      tags: [Pages]
+      summary: List Music and Sports events for a city
+      description: |
+        Fetches up to 6 events per category (Music, Sports) from Ticketmaster in parallel.
+        Results are cached for 5 minutes per `city` + `countryCode`.
+      parameters:
+        - name: city
+          in: query
+          required: true
+          schema: { type: string, example: Toronto }
+        - name: countryCode
+          in: query
+          required: true
+          description: ISO 3166-1 alpha-2 country code. Case-insensitive.
+          schema: { type: string, minLength: 2, maxLength: 2, example: CA }
+      responses:
+        "200":
+          description: Rendered `lists.tpl`
+          headers:
+            X-Cache:
+              $ref: "#/components/headers/XCache"
+          content:
+            text/html:
+              schema: { type: string }
+        "400":
+          $ref: "#/components/responses/HtmlError"
+        "404":
+          $ref: "#/components/responses/HtmlError"
+        "429":
+          $ref: "#/components/responses/HtmlError"
+        "502":
+          $ref: "#/components/responses/HtmlError"
+        "504":
+          $ref: "#/components/responses/HtmlError"
+
+  /events/{eventId}:
+    get:
+      tags: [Pages]
+      summary: Show a single event
+      description: Cached for 10 minutes per event id.
+      parameters:
+        - $ref: "#/components/parameters/EventId"
+      responses:
+        "200":
+          description: Rendered `single-event.tpl`
+          headers:
+            X-Cache:
+              $ref: "#/components/headers/XCache"
+          content:
+            text/html:
+              schema: { type: string }
+        "400":
+          $ref: "#/components/responses/HtmlError"
+        "404":
+          $ref: "#/components/responses/HtmlError"
+        "429":
+          $ref: "#/components/responses/HtmlError"
+        "502":
+          $ref: "#/components/responses/HtmlError"
+        "504":
+          $ref: "#/components/responses/HtmlError"
+
+  /redirect/{eventId}:
+    get:
+      tags: [Pages]
+      summary: Redirect to the ticket provider
+      description: |
+        Looks up the event (cache first) and redirects to its ticket URL.
+        The URL must be **https**, contain no user info, and its host must be (a subdomain of)
+        `ticketmaster.com`, `ticketmaster.ca`, `ticketmaster.co.uk`, `livenation.com` or `ticketweb.com`.
+        Anything else is rejected with 502.
+      parameters:
+        - $ref: "#/components/parameters/EventId"
+      responses:
+        "302":
+          description: Redirect to the approved ticket URL
+          headers:
+            Location:
+              schema: { type: string, format: uri, example: "https://www.ticketmaster.com/event/abc" }
+        "400":
+          $ref: "#/components/responses/HtmlError"
+        "404":
+          description: Event not found, or it has no ticket URL
+          content:
+            text/html:
+              schema: { type: string }
+        "502":
+          description: Ticket URL is not on the approved list, or upstream error
+          content:
+            text/html:
+              schema: { type: string }
+
+  /api/locations/autocomplete:
+    get:
+      tags: [Locations]
+      summary: Autocomplete city names
+      description: Proxies Google Places Autocomplete restricted to cities.
+      parameters:
+        - name: input
+          in: query
+          required: true
+          description: Text typed by the user (2-100 characters after trimming).
+          schema: { type: string, minLength: 2, maxLength: 100, example: Toron }
+        - $ref: "#/components/parameters/SessionToken"
+      responses:
+        "200":
+          description: Matching places (may be empty)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Suggestion"
+              example:
+                - placeId: ChIJpTvG15DL1IkRd8S0KlBVNTI
+                  text: Toronto, ON, Canada
+        "400":
+          $ref: "#/components/responses/JsonError"
+        "500":
+          $ref: "#/components/responses/JsonError"
+
+  /api/locations/{placeId}:
+    get:
+      tags: [Locations]
+      summary: Resolve a place id to a city and country code
+      description: |
+        Calls Google Place Details and picks the city from address components.
+        `locality` wins; `postal_town` and `administrative_area_level_2` are fallbacks.
+      parameters:
+        - name: placeId
+          in: path
+          required: true
+          schema: { type: string, maxLength: 200 }
+        - $ref: "#/components/parameters/SessionToken"
+      responses:
+        "200":
+          description: Resolved city
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/City"
+              example:
+                city: Toronto
+                countryCode: CA
+        "400":
+          $ref: "#/components/responses/JsonError"
+        "404":
+          $ref: "#/components/responses/JsonError"
+        "422":
+          description: No city or valid 2-letter country code could be determined
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          $ref: "#/components/responses/JsonError"
+
+  /api/cache/events:
+    delete:
+      tags: [Cache]
+      summary: Invalidate the cached event list for a city
+      parameters:
+        - name: city
+          in: query
+          required: true
+          schema: { type: string, example: Toronto }
+        - name: countryCode
+          in: query
+          required: true
+          schema: { type: string, example: CA }
+      responses:
+        "200":
+          description: "`deleted` is false when nothing was cached"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CacheDeleteResult"
+              example:
+                key: "events:list:toronto:CA:6"
+                deleted: true
+        "400":
+          $ref: "#/components/responses/JsonError"
+        "500":
+          $ref: "#/components/responses/JsonError"
+
+  /api/cache/events/{eventId}:
+    delete:
+      tags: [Cache]
+      summary: Invalidate the cached single event
+      parameters:
+        - $ref: "#/components/parameters/EventId"
+      responses:
+        "200":
+          description: "`deleted` is false when nothing was cached"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CacheDeleteResult"
+              example:
+                key: "events:single:G5vZ9"
+                deleted: true
+        "400":
+          $ref: "#/components/responses/JsonError"
+        "500":
+          $ref: "#/components/responses/JsonError"
+
+  /api/cache/all:
+    delete:
+      tags: [Cache]
+      summary: Clear every cache
+      responses:
+        "200":
+          description: Both caches cleared
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  cleared: { type: boolean, example: true }
+        "500":
+          $ref: "#/components/responses/JsonError"
+
+components:
+  headers:
+    XCache:
+      description: Whether the response was served from the in-memory cache
+      schema:
+        type: string
+        enum: [HIT, MISS]
+
+  parameters:
+    EventId:
+      name: eventId
+      in: path
+      required: true
+      description: Ticketmaster event id
+      schema: { type: string, example: G5vZ9 }
+    SessionToken:
+      name: sessionToken
+      in: query
+      required: true
+      description: Google Places session token. Use the same token for autocomplete and the follow-up place lookup.
+      schema: { type: string, example: 6f1c2e9a-5b0d-4c1e-9a7b-1d2e3f4a5b6c }
+
+  responses:
+    HtmlError:
+      description: Rendered `error.tpl` with a user-friendly title and message
+      content:
+        text/html:
+          schema: { type: string }
+    JsonError:
+      description: Error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        Error:
+          type: string
+          example: session token is not present
+    Suggestion:
+      type: object
+      properties:
+        placeId: { type: string }
+        text: { type: string }
+    City:
+      type: object
+      properties:
+        city: { type: string }
+        countryCode: { type: string, minLength: 2, maxLength: 2 }
+    CacheDeleteResult:
+      type: object
+      properties:
+        key: { type: string }
+        deleted: { type: boolean }
