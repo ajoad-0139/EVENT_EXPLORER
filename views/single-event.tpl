@@ -100,7 +100,7 @@
                 </div>
                 {{end}}
 
-                <a class="event-detail-button" href="{{.URL}}" target="_blank" rel="noopener noreferrer">
+                <a class="event-detail-button" href="/redirect/{{.ID}}" target="_blank" rel="noopener noreferrer">
                     <span>View tickets</span>
                     <span>&nearr;</span>
                 </a>

@@ -19,6 +19,7 @@ var (
 )
 
 func init() {
+
 	var err error
 	// "interval" = seconds between expired-item GC sweeps
 	ListCache, err = cache.NewCache("memory", `{"interval":60}`)

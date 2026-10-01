@@ -12,6 +12,7 @@ func init() {
 	beego.Router("/", &controllers.MainController{})
 	beego.Router("/events", &controllers.EventsController{}, "get:ListEvents")
 	beego.Router("/events/:eventId", &controllers.EventsController{}, "get:SingleEvent")
+	beego.Router("/redirect/:eventId", &controllers.EventsController{}, "get:RedirectToTickets")
 
 	//api proxies for serving data to browser
 	api := beego.NewNamespace("/api",

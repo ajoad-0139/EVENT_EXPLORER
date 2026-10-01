@@ -322,6 +322,26 @@
     color: rgb(100, 108, 106);
 }
 
+
+.error-section {
+    text-align: center;
+    padding: 80px 20px;
+}
+.error-status {
+    font-size: 64px;
+    font-weight: 700;
+}
+.error-title {
+    margin: 8px 0;
+}
+.error-message {
+    max-width: 480px;
+    margin: 0 auto 24px;
+}
+.error-button {
+    display: inline-flex;
+}
+
 /* tablet view */
 
 @media(max-width: 1024px){
