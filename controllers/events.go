@@ -32,11 +32,12 @@ func (e *EventsController) ListEvents() {
 	cachedData, err := requests.ListCache.Get(e.Ctx.Request.Context(), cacheKey)
 
 	if err == nil && cachedData != nil {
+		e.Ctx.ResponseWriter.Header().Set("X-Cache", "HIT")
 		e.Data["events"] = cachedData
 		e.TplName = "lists.tpl"
 		return
 	}
-
+	e.Ctx.ResponseWriter.Header().Set("X-Cache", "MISS")
 	res, statusCode, errMsg := requests.GetEvents(e.Ctx.Request.Context(), city, countryCode, limit)
 	if errMsg != "" {
 		utils.RenderError(&e.Controller, statusCode, errMsg)
@@ -60,10 +61,12 @@ func (e *EventsController) SingleEvent() {
 	cacheKey := requests.SingleKey(eventId)
 	cachedData, err := requests.SingleCache.Get(e.Ctx.Request.Context(), cacheKey)
 	if err == nil && cachedData != nil {
+		e.Ctx.ResponseWriter.Header().Set("X-Cache", "HIT")
 		e.Data["single-event"] = cachedData
 		e.TplName = "single-event.tpl"
 		return
 	}
+	e.Ctx.ResponseWriter.Header().Set("X-Cache", "MISS")
 	res, statusCode, errMsg := requests.GetSingleEvent(e.Ctx.Request.Context(), eventId)
 	if errMsg != "" {
 		utils.RenderError(&e.Controller, statusCode, errMsg)
