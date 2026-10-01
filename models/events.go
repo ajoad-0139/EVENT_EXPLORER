@@ -40,13 +40,14 @@ type EventsListResponse struct {
 	} `json:"_embedded"`
 }
 
-type FetchedResult struct {
-	Events []EventResponse
-	Status int
-	ErrMsg string
-}
-
 type EventCategory struct {
 	Name   string
 	Events []EventResponse
+}
+
+type FetchedResult struct {
+	Category string
+	Events   []EventResponse
+	Status   int
+	ErrMsg   string
 }

@@ -7,7 +7,6 @@ import (
 	"event-explorer/secrets"
 	"net/http"
 	"net/url"
-	"sync"
 	"time"
 )
 
@@ -62,30 +61,31 @@ func GetConcurrentEvents(ctx context.Context, city string, countryCode string, c
 func GetEvents(ctx context.Context, city string, countryCode string, limit string) ([]models.EventCategory, int, string) {
 
 	categories := []string{"Music", "Sports"}
-	results := make([]models.FetchedResult, len(categories))
 
-	var wg sync.WaitGroup
-	for i, category := range categories {
-		wg.Add(1)
-		go func(i int, category string) {
-			defer wg.Done()
+	resultChan := make(chan models.FetchedResult, len(categories))
+
+	for _, category := range categories {
+		go func(category string) {
 			events, status, errMsg := GetConcurrentEvents(ctx, city, countryCode, category, limit)
-			results[i] = models.FetchedResult{Events: events, Status: status, ErrMsg: errMsg} // each goroutine writes only its own index
-		}(i, category)
+			resultChan <- models.FetchedResult{Category: category, Events: events, Status: status, ErrMsg: errMsg}
+		}(category)
 	}
-	wg.Wait()
 
-	// group by category, keeping the order of `categories`
 	sections := make([]models.EventCategory, 0, len(categories))
-	for i, r := range results {
-		if r.Status != http.StatusOK {
-			return nil, r.Status, r.ErrMsg
+
+	for i := 0; i < len(categories); i++ {
+		result := <-resultChan
+		if result.Status != http.StatusOK {
+			return nil, result.Status, result.ErrMsg
 		}
+
 		sections = append(sections, models.EventCategory{
-			Name:   categories[i],
-			Events: r.Events,
+			Name:   result.Category,
+			Events: result.Events,
 		})
 	}
+
+	close(resultChan)
 
 	return sections, http.StatusOK, ""
 }
