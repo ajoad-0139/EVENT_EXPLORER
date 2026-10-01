@@ -1,6 +1,7 @@
 const searchInput = document.querySelector(".search-input");
 const searchButton = document.querySelector(".search-button");
 const suggestedCities = document.querySelector("#suggested-cities");
+const changeCityBtn = document.querySelector(".city-header-button")
 
 let debounceTimer;
 let sessionToken = crypto.randomUUID();
@@ -8,6 +9,12 @@ let sessionToken = crypto.randomUUID();
 let suggestions = [];
 
 let selectedPlace = null;
+
+if (changeCityBtn) {
+    changeCityBtn.addEventListener("click", () => {
+        window.location.href = "/";
+    });
+}
 
 searchInput.addEventListener("input", (event) => {
     const query = event.target.value.trim();
@@ -107,3 +114,5 @@ searchButton.addEventListener("click", async () => {
         console.error("Failed to get location details:", error);
     }
 });
+
+

@@ -93,7 +93,7 @@ ticketmasterbaseurl=https://app.ticketmaster.com/discovery/v2/
 
 ```bash
 git clone https://github.com/ajoad-0139/EVENT_EXPLORER.git
-cd event-explorer
+cd EVENT_EXPLORER
 cp .env.example .env     # then edit .env with your real keys
 go mod download
 go run main.go
