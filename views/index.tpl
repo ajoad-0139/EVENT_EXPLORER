@@ -12,16 +12,7 @@
             <div class="nav-logo-box">e.</div>
             <p class="company-banner">eventexplorer</p>
         </section>
-        {{/* <section class="nav-right-section">
-            <section class="nav-link-container">
-                <a class="nav-link nav-link-active">Discover</a>
-                <a class="nav-link">API guide</a>
-            </section>
-            <button class="nav-sample-button">
-                <span class="nav-sample-dot"></span>
-                Sample data
-            </button>
-        </section> */}}
+
     </nav>
 
     <!-- preview notice strip -->
